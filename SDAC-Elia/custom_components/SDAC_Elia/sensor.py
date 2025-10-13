@@ -33,18 +33,31 @@ def setup_platform(
 class EliaSensor(SensorEntity):
     """Representation of a Sensor."""
 
-    _attr_name = "Elia SDAC current price"              # Name of sensor
-    _attr_native_unit_of_measurement = CURRENCY_EURO    # Unit of state value
+    _attr_name = "Elia SDAC current price"                      # Name of sensor
+    _attr_native_unit_of_measurement = f"{CURRENCY_EURO}/MWh"   # Unit of state value
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self):
-        self.last_update_time: datetime.datetime | None = None  # Time of last updated state of sensor
-        self.last_fetch_time: datetime.datetime | None = None   # Time of last data fetch from Elia
-        self.last_fetch_date: datetime.date | None = None       # Date of last data fetch from Elia
-        self.SDAC_data: Any = None                              # JSON object with SDAC price data from Elia
-        self.prices: list[dict] = []                            # Filtered data with time and price pairs
-        self.current_price: float | None = None                 # Current SDAC price
         super().__init__()
+        self._last_update_time: datetime.datetime | None = None  # Time of last updated state of sensor
+        self._last_fetch_time: datetime.datetime | None = None   # Time of last data fetch from Elia
+        self._last_fetch_date: datetime.date | None = None       # Date of last data fetch from Elia
+        self._SDAC_data: Any = None                              # JSON object with SDAC price data from Elia
+        self._prices: list[dict] = []                            # Filtered data with time and price pairs
+        self._current_price: float | None = None                 # Current SDAC price
+    
+    @property
+    def native_value(self) -> float | None: # type: ignore[override]
+        """Return the current SDAC price so it gets stored in the sensor as value"""
+        return self._current_price
+    
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]: # type: ignore
+        """Store all SDAC prices of the day."""
+        return {
+            "Last update:": self._last_fetch_time,
+            "prices": self._prices,
+            }
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -54,38 +67,27 @@ class EliaSensor(SensorEntity):
         
         time_now = datetime.datetime.now()
         date_today = datetime.date.today()
-        if self.last_fetch_date != date_today:
+        if self._last_fetch_date != date_today:
             try:
-                self.SDAC_data = self._fetch_data()
+                self._SDAC_data = self._fetch_data()
             except Exception as err:
                 _LOGGER.error("Error fetching data from Elia: %s", err)
                 return
             
             _LOGGER.info("SDAC prices fetched from Elia")
-            self.prices = [{"time": i["dateTime"], "price": i["price"]} for i in self.SDAC_data]  # filter data to store time and price
-            self.set_price_attributes()
-            self.last_fetch_time = time_now
-            self.last_fetch_date = date_today
+            self._prices = [{"time": i["dateTime"], "price": i["price"]} for i in self._SDAC_data]  # filter data to store time and price
+            self._last_fetch_time = time_now
+            self._last_fetch_date = date_today
 
-        self.current_price = self.get_current_price()
-        self._attr_native_value = self.current_price  # Write current price to sensor state
+        self._current_price = self.get_current_price()
         _LOGGER.info("SDAC_Elia sensor value updated")
-
-    def set_price_attributes(self) -> None:
-        """Store prices of the day in sensor attributes"""
-        local_time = datetime.datetime.now()
-        self._attr_extra_state_attributes = {
-            "Last update:": local_time.replace(microsecond=0),
-            "prices": self.prices,
-            }
-        _LOGGER.info(f"Elia SDAC prices updated at {local_time}")
 
     def get_current_price(self) -> float | None:
         utc_time = datetime.datetime.now(datetime.timezone.utc)                                     # Get current UTC time
         rounded_quarter = utc_time.minute // 15 * 15                                                # determine last quarter minutes
         rounded_utc_time = utc_time.replace(microsecond=0, second=0, minute=rounded_quarter)        # change current minutes to last quarter
         target_time_str = rounded_utc_time.strftime("%Y-%m-%dT%H:%M:%SZ")                           # Create string to match standard
-        current_price_dict = next((p for p in self.prices if p["time"] == target_time_str), None)   # Get time matching price dict
+        current_price_dict = next((p for p in self._prices if p["time"] == target_time_str), None)  # Get time matching price dict
         if current_price_dict == None:
             _LOGGER.error("No time match found in prices from Elia")
             return None
