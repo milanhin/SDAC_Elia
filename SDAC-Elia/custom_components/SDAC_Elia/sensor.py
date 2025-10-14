@@ -52,7 +52,7 @@ class EliaSensor(SensorEntity):
         return self._current_price
     
     @property
-    def extra_state_attributes(self) -> dict[str, Any]: # type: ignore
+    def extra_state_attributes(self) -> dict[str, Any]: # type: ignore[override]
         """Store all SDAC prices of the day."""
         return {
             "Last update:": self._last_fetch_time,
