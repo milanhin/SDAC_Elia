@@ -32,6 +32,8 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
         self.SDAC_data: Any = None                              # JSON object with SDAC price data from Elia
         self.prices: list[dict] = []                            # Filtered data with time and price pairs
         self.current_price: float | None = None                 # Current SDAC price
+        self.ecopower_price: float | None = None                # Current elektricity price for Ecopower clients
+        self.ecopower_injection_price: float | None = None      # Current injection price for ecopower clients
     
     async def _async_setup(self):
         """Run setup"""
@@ -53,6 +55,8 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
             self.last_fetch_date = date_today
         
         self.current_price = self.get_current_price()  # Always update current price
+        self.ecopower_price = self.calculate_ecopower_price(sdac=self.current_price)
+        self.ecopower_injection_price = self.calculate_ecopower_injection_price(sdac=self.current_price)
 
         data = {
             "prices": self.prices,
@@ -81,3 +85,11 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
             return None
         current_price = current_price_dict["price"]
         return current_price
+    
+    def calculate_ecopower_price(self, sdac) -> float:
+        rounded_price = round(1.02 * sdac + 4, 2)
+        return rounded_price
+    
+    def calculate_ecopower_injection_price(self, sdac) -> float:
+        rounded_inj_price = round(0.98 * sdac - 15, 2)
+        return rounded_inj_price
