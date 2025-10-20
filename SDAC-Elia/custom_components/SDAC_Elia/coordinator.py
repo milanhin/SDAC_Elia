@@ -14,10 +14,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant import config_entries
 
 from .const import (
+    CONF_PRICE_FACTOR,
     CONF_FIXED_PRICE,
-    CONF_REL_PRICE_FACTOR,
-    CONF_FIXED_INJECTION_PRICE,
-    CONF_REL_INJECTION_FACTOR,
+    CONF_FIXED_INJ_PRICE,
+    CONF_INJ_TARIFF_FACTOR,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -33,21 +33,21 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
             logger=_LOGGER,
             name="SDAC_Elia-coordinator",
             config_entry=None,
-            update_interval=datetime.timedelta(minutes=1)       # Interval for which to update coordinator data
+            update_interval=datetime.timedelta(minutes=1)               # Interval for which to update coordinator data
         )
-        self.last_fetch_time: datetime.datetime | None = None   # Time of last data fetch from Elia
-        self.last_fetch_date: datetime.date | None = None       # Date of last data fetch from Elia
-        self.SDAC_data: Any = None                              # JSON object with SDAC price data from Elia
-        self.prices: list[dict] = []                            # Filtered data with time and price pairs
-        self.current_price: float | None = None                 # Current SDAC price
-        self.ecopower_price: float | None = None                # Current elektricity price for Ecopower clients
-        self.ecopower_injection_price: float | None = None      # Current injection price for ecopower clients
-        self.custom_price: float | None = None                  # Price based on config formula
-        self.custom_inj_price: float | None = None              # Feed-in payment based on config formula
-        self.conf_rel_price = platform_config[CONF_REL_PRICE_FACTOR]
-        self.conf_fixed_price = platform_config[CONF_FIXED_PRICE]
-        self.conf_rel_injection_price = platform_config[CONF_REL_INJECTION_FACTOR]
-        self.conf_fixed_injection_price = platform_config[CONF_FIXED_INJECTION_PRICE]
+        self.last_fetch_time: datetime.datetime | None = None           # Time of last data fetch from Elia
+        self.last_fetch_date: datetime.date | None = None               # Date of last data fetch from Elia
+        self.SDAC_data: Any = None                                      # JSON object with SDAC price data from Elia
+        self.prices: list[dict] = []                                    # Filtered data with time and price pairs
+        self.sdac_price: float | None = None                            # Current SDAC price
+        self.ecopower_price: float | None = None                        # Current elektricity price for Ecopower clients
+        self.ecopower_inj_tariff: float | None = None                   # Current injection tariff for ecopower clients
+        self.custom_price: float | None = None                          # Price based on config formula
+        self.custom_inj_tariff: float | None = None                     # Injection tariff based on config formula
+        self.conf_price_factor = platform_config[CONF_PRICE_FACTOR]     # Factor of EPEX for price formula
+        self.conf_fixed_price = platform_config[CONF_FIXED_PRICE]       # Fixed added price for price formula
+        self.conf_rel_inj_tariff = platform_config[CONF_INJ_TARIFF_FACTOR]  # Factor of EPEX for injection tariff formula
+        self.conf_fixed_inj_price = platform_config[CONF_FIXED_INJ_PRICE]   # Fixed added price for injection tariff formula
     
     async def _async_setup(self):
         """Run setup"""
@@ -68,17 +68,17 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
             self.last_fetch_time = time_now
             self.last_fetch_date = date_today
         
-        self.current_price = self.get_current_price()
+        self.sdac_price = self.get_current_price()
 
-        if self.current_price != None:
-            self.ecopower_price = self.calculate_ecopower_price(sdac=self.current_price)
-            self.ecopower_injection_price = self.calculate_ecopower_injection_price(sdac=self.current_price)
-            self.custom_price = self.calculate_custom_price(sdac=self.current_price)
-            self.custom_inj_price = self.calculate_custom_injection_price(sdac=self.current_price)
+        if self.sdac_price != None:
+            self.ecopower_price = self.calculate_ecopower_price(sdac=self.sdac_price)
+            self.ecopower_inj_tariff = self.calculate_ecopower_inj_tariff(sdac=self.sdac_price)
+            self.custom_price = self.calculate_custom_price(sdac=self.sdac_price)
+            self.custom_inj_tariff = self.calculate_custom_inj_tariff(sdac=self.sdac_price)
 
         data = {
             "prices": self.prices,
-            "current_price": self.current_price,
+            "current_price": self.sdac_price,
             "last_fetch_time": self.last_fetch_time
         }
         return data
@@ -108,16 +108,16 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
         rounded_price = round(1.02 * sdac + 4, 2)
         return rounded_price
     
-    def calculate_ecopower_injection_price(self, sdac: float) -> float:
-        rounded_inj_price = round(0.98 * sdac - 15, 2)
-        return rounded_inj_price
+    def calculate_ecopower_inj_tariff(self, sdac: float) -> float:
+        rounded_inj_tariff = round(0.98 * sdac - 15, 2)
+        return rounded_inj_tariff
     
     def calculate_custom_price(self, sdac: float) -> float:
-        custom_price = (self.conf_rel_price * sdac + self.conf_fixed_price) * 1e3  # Price in eur/MWh
+        custom_price = (self.conf_price_factor * sdac + self.conf_fixed_price) * 1e3  # Price in eur/MWh
         rounded_custom_price = round(custom_price, 2)
         return rounded_custom_price
     
-    def calculate_custom_injection_price(self, sdac: float) -> float:
-        custum_inj_price = (self.conf_rel_injection_price * sdac - self.conf_fixed_injection_price) * 1e3
-        rounded_custom_inj_price = round(custum_inj_price, 2)
-        return rounded_custom_inj_price
+    def calculate_custom_inj_tariff(self, sdac: float) -> float:
+        custum_inj_tariff = (self.conf_rel_inj_tariff * sdac - self.conf_fixed_inj_price) * 1e3
+        rounded_custom_inj_tariff = round(custum_inj_tariff, 2)
+        return rounded_custom_inj_tariff

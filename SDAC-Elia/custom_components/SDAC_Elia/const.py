@@ -1,6 +1,6 @@
 DOMAIN = "SDAC_Elia"
 
-CONF_REL_PRICE_FACTOR = "relative_price_factor"
+CONF_PRICE_FACTOR = "price_factor"
 CONF_FIXED_PRICE = "fixed_price"
-CONF_REL_INJECTION_FACTOR = "relative_injection_price_factor"
-CONF_FIXED_INJECTION_PRICE = "fixed_injection_price"
+CONF_INJ_TARIFF_FACTOR = "injection_tariff_factor"
+CONF_FIXED_INJ_PRICE = "fixed_injection_price"

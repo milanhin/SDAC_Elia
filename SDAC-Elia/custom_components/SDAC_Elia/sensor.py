@@ -21,19 +21,19 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .coordinator import SDAC_EliaCoordinator
 from .const import(
     CONF_FIXED_PRICE,
-    CONF_REL_PRICE_FACTOR,
-    CONF_FIXED_INJECTION_PRICE,
-    CONF_REL_INJECTION_FACTOR
+    CONF_PRICE_FACTOR,
+    CONF_FIXED_INJ_PRICE,
+    CONF_INJ_TARIFF_FACTOR
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Required(CONF_REL_PRICE_FACTOR): vol.Coerce(float),
+        vol.Required(CONF_PRICE_FACTOR): vol.Coerce(float),
         vol.Required(CONF_FIXED_PRICE): vol.Coerce(float),
-        vol.Required(CONF_REL_INJECTION_FACTOR): vol.Coerce(float),
-        vol.Required(CONF_FIXED_INJECTION_PRICE): vol.Coerce(float),
+        vol.Required(CONF_INJ_TARIFF_FACTOR): vol.Coerce(float),
+        vol.Required(CONF_FIXED_INJ_PRICE): vol.Coerce(float),
     }
 )
 
@@ -72,7 +72,7 @@ class EliaSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncom
     @property
     def native_value(self) -> float | None: # pyright: ignore[reportIncompatibleVariableOverride]
         """Return the current SDAC price so it gets stored in the sensor as value"""
-        return self.coordinator.current_price
+        return self.coordinator.sdac_price
     
     @property
     def extra_state_attributes(self) -> dict[str, Any]: # pyright: ignore[reportIncompatibleVariableOverride]
@@ -84,7 +84,7 @@ class EliaSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncom
 
 
 class EcopowerPriceSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncompatibleVariableOverride]
-    """Sensor to show current energy price for Ecopower clients"""
+    """Sensor to show current elektricity price for Ecopower clients"""
     _attr_name = "Ecopower elektricity price"                   # Name of sensor
     _attr_native_unit_of_measurement = f"{CURRENCY_EURO}/MWh"   # Unit of state value
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -100,8 +100,8 @@ class EcopowerPriceSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[re
 
 
 class EcopowerInjectionSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncompatibleVariableOverride]
-    """Sensor to show current injection price for Ecopower clients"""
-    _attr_name = "Ecopower feed-in payment"                     # Name of sensor
+    """Sensor to show current injection tariff for Ecopower clients"""
+    _attr_name = "Ecopower injection tariff"                      # Name of sensor
     _attr_native_unit_of_measurement = f"{CURRENCY_EURO}/MWh"   # Unit of state value
     _attr_state_class = SensorStateClass.MEASUREMENT
 
@@ -111,8 +111,8 @@ class EcopowerInjectionSensor(CoordinatorEntity, SensorEntity): # pyright: ignor
     
     @property
     def native_value(self) -> float | None: # pyright: ignore[reportIncompatibleVariableOverride]
-        """Return Ecopower injection price so it gets stored in the sensor as value"""
-        return self.coordinator.ecopower_injection_price
+        """Return Ecopower injection tariff so it gets stored in the sensor as value"""
+        return self.coordinator.ecopower_inj_tariff
 
 
 class CustomPriceSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncompatibleVariableOverride]
@@ -132,8 +132,8 @@ class CustomPriceSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[repo
 
 
 class CustomInjectionSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncompatibleVariableOverride]
-    """Sensor to show current injection price based on custom config formula"""
-    _attr_name = "Custom feed-in payment"                       # Name of sensor
+    """Sensor to show current injection tariff based on custom config formula"""
+    _attr_name = "Custom injection tariff"                        # Name of sensor
     _attr_native_unit_of_measurement = f"{CURRENCY_EURO}/MWh"   # Unit of state value
     _attr_state_class = SensorStateClass.MEASUREMENT
 
@@ -143,5 +143,5 @@ class CustomInjectionSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[
     
     @property
     def native_value(self) -> float | None: # pyright: ignore[reportIncompatibleVariableOverride]
-        """Return custom price based on parameters in yaml config"""
-        return self.coordinator.custom_inj_price
+        """Return custom injection tariff based on parameters in yaml config"""
+        return self.coordinator.custom_inj_tariff
