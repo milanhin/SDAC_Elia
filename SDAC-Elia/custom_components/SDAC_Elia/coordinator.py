@@ -9,8 +9,14 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
+from homeassistant.helpers.typing import ConfigType
 from homeassistant.core import HomeAssistant
 from homeassistant import config_entries
+
+from .const import (
+    CONF_FIXED_PRICE,
+    CONF_REL_PRICE_FACTOR
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,13 +24,13 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
     def __init__(
             self,
             hass: HomeAssistant,
-            config_entry: config_entries.ConfigEntry | None
+            platform_config: ConfigType
     ) -> None:
         super().__init__(
             hass=hass,
             logger=_LOGGER,
             name="SDAC_Elia-coordinator",
-            config_entry=config_entry,
+            config_entry=None,
             update_interval=datetime.timedelta(minutes=1)       # Interval for which to update coordinator data
         )
         self.last_fetch_time: datetime.datetime | None = None   # Time of last data fetch from Elia
@@ -34,6 +40,9 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
         self.current_price: float | None = None                 # Current SDAC price
         self.ecopower_price: float | None = None                # Current elektricity price for Ecopower clients
         self.ecopower_injection_price: float | None = None      # Current injection price for ecopower clients
+        self.custom_price: float | None = None                  # Price based on config formula
+        self.conf_rel_price = platform_config[CONF_REL_PRICE_FACTOR]
+        self.conf_fixed_price = platform_config[CONF_FIXED_PRICE]
     
     async def _async_setup(self):
         """Run setup"""
@@ -57,6 +66,7 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
         self.current_price = self.get_current_price()  # Always update current price
         self.ecopower_price = self.calculate_ecopower_price(sdac=self.current_price)
         self.ecopower_injection_price = self.calculate_ecopower_injection_price(sdac=self.current_price)
+        self.custom_price = self.calculate_custom_price(sdac=self.current_price)
 
         data = {
             "prices": self.prices,
@@ -93,3 +103,8 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
     def calculate_ecopower_injection_price(self, sdac) -> float:
         rounded_inj_price = round(0.98 * sdac - 15, 2)
         return rounded_inj_price
+    
+    def calculate_custom_price(self, sdac) -> float:
+        custom_price = (self.conf_rel_price * sdac + self.conf_fixed_price) * 1e3  # Price in eur/MWh
+        rounded_custom_price = round(custom_price, 2)
+        return rounded_custom_price
