@@ -21,7 +21,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .coordinator import SDAC_EliaCoordinator
 from .const import(
     CONF_FIXED_PRICE,
-    CONF_REL_PRICE_FACTOR
+    CONF_REL_PRICE_FACTOR,
+    CONF_FIXED_INJECTION_PRICE,
+    CONF_REL_INJECTION_FACTOR
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,7 +31,9 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_REL_PRICE_FACTOR): vol.Coerce(float),
-        vol.Required(CONF_FIXED_PRICE): vol.Coerce(float)
+        vol.Required(CONF_FIXED_PRICE): vol.Coerce(float),
+        vol.Required(CONF_REL_INJECTION_FACTOR): vol.Coerce(float),
+        vol.Required(CONF_FIXED_INJECTION_PRICE): vol.Coerce(float),
     }
 )
 
@@ -47,7 +51,8 @@ async def async_setup_platform(
             EliaSensor(sdac_coordinator),
             EcopowerPriceSensor(sdac_coordinator),
             EcopowerInjectionSensor(sdac_coordinator),
-            CustomPriceSensor(sdac_coordinator)
+            CustomPriceSensor(sdac_coordinator),
+            CustomInjectionSensor(sdac_coordinator),
         ]
     )
     _LOGGER.info("SDAC_Elia platform was set up")
@@ -96,7 +101,7 @@ class EcopowerPriceSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[re
 
 class EcopowerInjectionSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncompatibleVariableOverride]
     """Sensor to show current injection price for Ecopower clients"""
-    _attr_name = "Ecopower injection price"                     # Name of sensor
+    _attr_name = "Ecopower feed-in payment"                     # Name of sensor
     _attr_native_unit_of_measurement = f"{CURRENCY_EURO}/MWh"   # Unit of state value
     _attr_state_class = SensorStateClass.MEASUREMENT
 
@@ -111,9 +116,9 @@ class EcopowerInjectionSensor(CoordinatorEntity, SensorEntity): # pyright: ignor
 
 
 class CustomPriceSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncompatibleVariableOverride]
-    """Sensor to show current injection price for Ecopower clients"""
-    _attr_name = "Custom elektricity price"                     # Name of sensor
-    _attr_native_unit_of_measurement = f"{CURRENCY_EURO}/MWh"   # Unit of state value
+    """Sensor to show current price based on config formula"""
+    _attr_name = "Custom elektricity price"                         # Name of sensor
+    _attr_native_unit_of_measurement = f"{CURRENCY_EURO}/MWh"       # Unit of state value
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator: SDAC_EliaCoordinator) -> None:
@@ -124,3 +129,19 @@ class CustomPriceSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[repo
     def native_value(self) -> float | None: # pyright: ignore[reportIncompatibleVariableOverride]
         """Return custom price based on parameters in yaml config"""
         return self.coordinator.custom_price
+
+
+class CustomInjectionSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncompatibleVariableOverride]
+    """Sensor to show current injection price based on custom config formula"""
+    _attr_name = "Custom feed-in payment"                       # Name of sensor
+    _attr_native_unit_of_measurement = f"{CURRENCY_EURO}/MWh"   # Unit of state value
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator: SDAC_EliaCoordinator) -> None:
+        super().__init__(coordinator)
+        self.coordinator = coordinator
+    
+    @property
+    def native_value(self) -> float | None: # pyright: ignore[reportIncompatibleVariableOverride]
+        """Return custom price based on parameters in yaml config"""
+        return self.coordinator.custom_inj_price
