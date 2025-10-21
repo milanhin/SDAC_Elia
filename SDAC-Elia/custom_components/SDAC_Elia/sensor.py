@@ -30,10 +30,10 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Required(CONF_PRICE_FACTOR): vol.Coerce(float),
-        vol.Required(CONF_FIXED_PRICE): vol.Coerce(float),
-        vol.Required(CONF_INJ_TARIFF_FACTOR): vol.Coerce(float),
-        vol.Required(CONF_FIXED_INJ_PRICE): vol.Coerce(float),
+        vol.Optional(CONF_PRICE_FACTOR): vol.Coerce(float),
+        vol.Optional(CONF_FIXED_PRICE): vol.Coerce(float),
+        vol.Optional(CONF_INJ_TARIFF_FACTOR): vol.Coerce(float),
+        vol.Optional(CONF_FIXED_INJ_PRICE): vol.Coerce(float),
     }
 )
 
@@ -44,17 +44,34 @@ async def async_setup_platform(
     discovery_info: DiscoveryInfoType | None = None
 ) -> None:
     """Set up the sensor platform."""
-    sdac_coordinator = SDAC_EliaCoordinator(hass=hass, platform_config=config)
-    await sdac_coordinator.async_refresh()  # Call _async_update_data() on setup
-    async_add_entities(
-        [
-            EliaSensor(sdac_coordinator),
-            EcopowerPriceSensor(sdac_coordinator),
-            EcopowerInjectionSensor(sdac_coordinator),
-            CustomPriceSensor(sdac_coordinator),
-            CustomInjectionSensor(sdac_coordinator),
-        ]
+    # Check if custom formulae are configured
+    custom_price_configured: bool = False
+    custom_inj_configured: bool = False
+    if CONF_PRICE_FACTOR in config and CONF_FIXED_PRICE in config:
+        custom_price_configured = True
+    if CONF_INJ_TARIFF_FACTOR in config and CONF_FIXED_INJ_PRICE in config:
+        custom_inj_configured = True
+
+    sdac_coordinator = SDAC_EliaCoordinator(
+        hass=hass,
+        platform_config=config,
+        custom_price_configured=custom_price_configured,
+        custom_inj_configured=custom_inj_configured
     )
+
+    await sdac_coordinator.async_refresh()  # Call _async_update_data() on setup
+    entities_to_add = [
+        EliaSensor(sdac_coordinator),
+        EcopowerPriceSensor(sdac_coordinator),
+        EcopowerInjectionSensor(sdac_coordinator),
+    ]
+
+    if custom_price_configured:
+        entities_to_add.append(CustomPriceSensor(sdac_coordinator))         # Add sensor if configured
+    if custom_inj_configured:
+        entities_to_add.append(CustomInjectionSensor(sdac_coordinator))     # Add sensor if configured
+
+    async_add_entities(entities_to_add)
     _LOGGER.info("SDAC_Elia platform was set up")
 
 

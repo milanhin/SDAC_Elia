@@ -26,7 +26,9 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
     def __init__(
             self,
             hass: HomeAssistant,
-            platform_config: ConfigType
+            platform_config: ConfigType,
+            custom_price_configured: bool,
+            custom_inj_configured: bool,
     ) -> None:
         super().__init__(
             hass=hass,
@@ -35,6 +37,9 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
             config_entry=None,
             update_interval=datetime.timedelta(minutes=1)               # Interval for which to update coordinator data
         )
+        self.custom_price_configured = custom_price_configured
+        self.custom_inj_configured = custom_inj_configured
+
         self.last_fetch_time: datetime.datetime | None = None           # Time of last data fetch from Elia
         self.last_fetch_date: datetime.date | None = None               # Date of last data fetch from Elia
         self.SDAC_data: Any = None                                      # JSON object with SDAC price data from Elia
@@ -44,13 +49,15 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
         self.ecopower_inj_tariff: float | None = None                   # Current injection tariff for ecopower clients
         self.custom_price: float | None = None                          # Price based on config formula
         self.custom_inj_tariff: float | None = None                     # Injection tariff based on config formula
-        self.conf_price_factor = platform_config[CONF_PRICE_FACTOR]     # Factor of EPEX for price formula
-        self.conf_fixed_price = platform_config[CONF_FIXED_PRICE]       # Fixed added price for price formula
-        self.conf_rel_inj_tariff = platform_config[CONF_INJ_TARIFF_FACTOR]  # Factor of EPEX for injection tariff formula
-        self.conf_fixed_inj_price = platform_config[CONF_FIXED_INJ_PRICE]   # Fixed added price for injection tariff formula
+        
+        if self.custom_price_configured:
+            self.conf_price_factor: float = platform_config[CONF_PRICE_FACTOR]           # Factor of EPEX for price formula
+            self.conf_fixed_price: float = platform_config[CONF_FIXED_PRICE]             # Fixed added price for price formula
+        if self.custom_inj_configured:
+            self.conf_rel_inj_tariff: float = platform_config[CONF_INJ_TARIFF_FACTOR]    # Factor of EPEX for injection tariff formula
+            self.conf_fixed_inj_price: float = platform_config[CONF_FIXED_INJ_PRICE]     # Fixed added price for injection tariff formula
     
     async def _async_setup(self):
-        """Run setup"""
         _LOGGER.info("SDAC_Elia coordinator was set up")
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -73,8 +80,11 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
         if self.sdac_price != None:
             self.ecopower_price = self.calculate_ecopower_price(sdac=self.sdac_price)
             self.ecopower_inj_tariff = self.calculate_ecopower_inj_tariff(sdac=self.sdac_price)
-            self.custom_price = self.calculate_custom_price(sdac=self.sdac_price)
-            self.custom_inj_tariff = self.calculate_custom_inj_tariff(sdac=self.sdac_price)
+            
+            if self.custom_price_configured:
+                self.custom_price = self.calculate_custom_price(sdac=self.sdac_price)
+            if self.custom_inj_configured:
+                self.custom_inj_tariff = self.calculate_custom_inj_tariff(sdac=self.sdac_price)
 
         data = {
             "prices": self.prices,
