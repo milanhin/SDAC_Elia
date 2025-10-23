@@ -4,7 +4,7 @@
   "codeowners": ["@milanhin"],
   "config_flow": false,
   "dependencies": [],
-  "documentation": "https://github.com/milanhin/SDAC_Elia",
+  "documentation": "https://github.com/milanhin/sdac_elia",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/milanhin/SDAC_Elia/issues",
   "requirements": [],
