@@ -9,7 +9,7 @@ All prices are expressed in €/MWh. No VAT or distribution network costs are ad
 ## Sensors
 This component adds the following sensors to Home Assistant:
 - Elia SDAC current price: shows the current sdac price and stores the forecast in its atributes
-- Ecopower elektricity price: price formula of Ecopower applied to sdac price
+- Ecopower electricity price: price formula of Ecopower applied to sdac price
 - Ecopower injection tariff: injection tariff formula of Ecopower applied to sdac price
 - Custom elektrcity price (Optional): custom formula applied to sdac price (meant for other suppliers than ecopower), needs to be configured
 - Custom injection tariff (Optional): custom formula for injection tariff applied to sdac price (meant for other suppliers than ecopower), needs to be configured
