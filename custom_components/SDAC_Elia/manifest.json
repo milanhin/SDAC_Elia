@@ -1,11 +1,12 @@
 {
-  "domain": "SDAC_Elia",
+  "domain": "sdac_elia",
   "name": "SDAC Elia",
   "codeowners": ["@milanhin"],
   "config_flow": false,
   "dependencies": [],
   "documentation": "https://github.com/milanhin/SDAC_Elia",
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/milanhin/SDAC_Elia/issues",
   "requirements": [],
-  "version": "1.0.0"
+  "version": "1.1.0"
 }
