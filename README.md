@@ -18,7 +18,7 @@ This component adds the following sensors to Home Assistant:
 To add the integration without custom sensors, with only the ecopower price and injection tariff sensors, the following entry should be added to the configuration.yaml file:
 ```
 sensor:
-  - platform: SDAC_Elia
+  - platform: sdac_elia
 ```
 Note that the "sensor" entry can only be in the file once. If it is already in the configuration file, the platform entry line should be added alongside the other already existing entries.
 
@@ -40,7 +40,7 @@ In the configuration.yaml file of Home Assistant, this would be configured as:
 
 ```
 sensor:
-- platform: SDAC_Elia
+- platform: sdac_elia
   custom_price:
     price_factor: 0.00102
     fixed_price: 0.004
@@ -77,4 +77,4 @@ series:
       });
 ```
 And would result in:\
-![SDAC prices forecast plot](https://github.com/milanhin/SDAC_Elia/blob/main/assets/forecast_plot.png)
+![SDAC prices forecast plot](https://github.com/milanhin/sdac_elia/blob/main/assets/forecast_plot.png)
