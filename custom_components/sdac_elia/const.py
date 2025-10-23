@@ -1,4 +1,4 @@
-DOMAIN = "SDAC_Elia"
+DOMAIN = "sdac_elia"
 
 CONF_PRICE_FACTOR = "price_factor"
 CONF_FIXED_PRICE = "fixed_price"
