@@ -1,5 +1,5 @@
 {
-  "codeowners": ["milanhin"],
+  "codeowners": ["@milanhin"],
   "config_flow": false,
   "dependencies": [],
   "documentation": "https://github.com/milanhin/SDAC_Elia",
