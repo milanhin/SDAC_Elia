@@ -29,6 +29,7 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
             platform_config: ConfigType,
             custom_price_configured: bool,
             custom_inj_configured: bool,
+            custom_params: dict[str, float],
     ) -> None:
         super().__init__(
             hass=hass,
@@ -51,11 +52,11 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
         self.custom_inj_tariff: float | None = None                     # Injection tariff based on config formula
         
         if self.custom_price_configured:
-            self.conf_price_factor: float = platform_config[CONF_PRICE_FACTOR]           # Factor of EPEX for price formula
-            self.conf_fixed_price: float = platform_config[CONF_FIXED_PRICE]             # Fixed added price for price formula
+            self.conf_price_factor: float = custom_params[CONF_PRICE_FACTOR]            # Factor of EPEX for price formula
+            self.conf_fixed_price: float = custom_params[CONF_FIXED_PRICE]              # Fixed added price for price formula
         if self.custom_inj_configured:
-            self.conf_rel_inj_tariff: float = platform_config[CONF_INJ_TARIFF_FACTOR]    # Factor of EPEX for injection tariff formula
-            self.conf_fixed_inj_price: float = platform_config[CONF_FIXED_INJ_PRICE]     # Fixed added price for injection tariff formula
+            self.conf_rel_inj_tariff: float = custom_params[CONF_INJ_TARIFF_FACTOR]     # Factor of EPEX for injection tariff formula
+            self.conf_fixed_inj_price: float = custom_params[CONF_FIXED_INJ_PRICE]      # Fixed added price for injection tariff formula
     
     async def _async_setup(self):
         _LOGGER.info("SDAC_Elia coordinator was set up")

@@ -23,17 +23,31 @@ from .const import(
     CONF_FIXED_PRICE,
     CONF_PRICE_FACTOR,
     CONF_FIXED_INJ_PRICE,
-    CONF_INJ_TARIFF_FACTOR
+    CONF_INJ_TARIFF_FACTOR,
+    CONF_CUSTOM_INJ_TARIFF,
+    CONF_CUSTOM_PRICE,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
+PRICE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_PRICE_FACTOR): vol.Coerce(float),
+        vol.Required(CONF_FIXED_PRICE): vol.Coerce(float),
+    }
+)
+
+INJ_TARIFF_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_INJ_TARIFF_FACTOR): vol.Coerce(float),
+        vol.Required(CONF_FIXED_INJ_PRICE): vol.Coerce(float),
+    }
+)
+
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Optional(CONF_PRICE_FACTOR): vol.Coerce(float),
-        vol.Optional(CONF_FIXED_PRICE): vol.Coerce(float),
-        vol.Optional(CONF_INJ_TARIFF_FACTOR): vol.Coerce(float),
-        vol.Optional(CONF_FIXED_INJ_PRICE): vol.Coerce(float),
+        vol.Optional(CONF_CUSTOM_PRICE): PRICE_SCHEMA,
+        vol.Optional(CONF_CUSTOM_INJ_TARIFF): INJ_TARIFF_SCHEMA,
     }
 )
 
@@ -47,16 +61,27 @@ async def async_setup_platform(
     # Check if custom formulae are configured
     custom_price_configured: bool = False
     custom_inj_configured: bool = False
-    if CONF_PRICE_FACTOR in config and CONF_FIXED_PRICE in config:
-        custom_price_configured = True
-    if CONF_INJ_TARIFF_FACTOR in config and CONF_FIXED_INJ_PRICE in config:
-        custom_inj_configured = True
+    custom_params: dict[str, float] = {}
 
+    # Check if custom price is configured and put coefficients in dict
+    if CONF_CUSTOM_PRICE in config:
+        custom_price_configured = True
+        custom_params[CONF_PRICE_FACTOR] = config[CONF_CUSTOM_PRICE][CONF_PRICE_FACTOR]
+        custom_params[CONF_FIXED_PRICE] = config[CONF_CUSTOM_PRICE][CONF_FIXED_PRICE]
+
+    # Check if custom injection tariff is configured and put coefficients in dict
+    if CONF_CUSTOM_INJ_TARIFF in config:
+        custom_inj_configured = True
+        custom_params[CONF_INJ_TARIFF_FACTOR] = config[CONF_CUSTOM_INJ_TARIFF][CONF_INJ_TARIFF_FACTOR]
+        custom_params[CONF_FIXED_INJ_PRICE] = config[CONF_CUSTOM_INJ_TARIFF][CONF_FIXED_INJ_PRICE]
+
+    # Initialise coordinator
     sdac_coordinator = SDAC_EliaCoordinator(
         hass=hass,
         platform_config=config,
         custom_price_configured=custom_price_configured,
-        custom_inj_configured=custom_inj_configured
+        custom_inj_configured=custom_inj_configured,
+        custom_params=custom_params,
     )
 
     await sdac_coordinator.async_refresh()  # Call _async_update_data() on setup
