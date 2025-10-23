@@ -15,12 +15,21 @@ This component adds the following sensors to Home Assistant:
 - Custom injection tariff (Optional): custom formula for injection tariff applied to sdac price (meant for other suppliers than ecopower), needs to be configured
 
 ## Configuration
+To add the integration without custom sensors, with only the ecopower price and injection tariff sensors, the following entry should be added to the configuration.yaml file:
+```
+sensor:
+  - platform: SDAC_Elia
+```
+Note that the "sensor" entry can only be in the file once. If it is already in the configuration file, the platform entry line should be added alongside the other already existing entries.
+
 To get the optional custom sensors, two parameters are required per sensor. These two typically make up a price formula.
-The config parameters are called:
-- price_factor
-- fixed_price
-- injection_tariff_factor
-- fixed_injection_price
+The config parameters for each sensor are called:
+- custom_price
+  - price_factor
+  - fixed_price
+- custom_injection_tariff
+  - injection_tariff_factor
+  - fixed_injection_price
 
 In the case of Ecopower's formulae:
 - elektrcity price: 0.00102 * EPEX_DA + 0.004 [€/kWh]
@@ -32,10 +41,12 @@ In the configuration.yaml file of Home Assistant, this would be configured as:
 ```
 sensor:
 - platform: SDAC_Elia
-  price_factor: 0.00102
-  fixed_price: 0.004
-  injection_tariff_factor: 0.00098
-  fixed_injection_price: 0.015
+  custom_price:
+    price_factor: 0.00102
+    fixed_price: 0.004
+  custom_injection_tariff:
+    injection_tariff_factor: 0.00098
+    fixed_injection_price: 0.015
 ```
 ## Graph with pricing forecast
 A graph can be shown with the [ApexChart Graph Card](https://github.com/RomRider/apexcharts-card). 
