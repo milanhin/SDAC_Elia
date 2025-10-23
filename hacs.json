@@ -1,4 +1,5 @@
 {
   "name": "SDAC Elia",
-  "render_readme": true
+  "render_readme": true,
+  "country": "BE"
 }
