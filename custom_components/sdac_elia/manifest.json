@@ -6,7 +6,7 @@
   "dependencies": [],
   "documentation": "https://github.com/milanhin/sdac_elia",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/milanhin/SDAC_Elia/issues",
+  "issue_tracker": "https://github.com/milanhin/sdac_elia/issues",
   "requirements": [],
   "version": "1.1.0"
 }
