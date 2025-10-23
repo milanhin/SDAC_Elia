@@ -46,7 +46,7 @@ class SDAC_EliaCoordinator(DataUpdateCoordinator):
         self.SDAC_data: Any = None                                      # JSON object with SDAC price data from Elia
         self.prices: list[dict] = []                                    # Filtered data with time and price pairs
         self.sdac_price: float | None = None                            # Current SDAC price
-        self.ecopower_price: float | None = None                        # Current elektricity price for Ecopower clients
+        self.ecopower_price: float | None = None                        # Current electricity price for Ecopower clients
         self.ecopower_inj_tariff: float | None = None                   # Current injection tariff for ecopower clients
         self.custom_price: float | None = None                          # Price based on config formula
         self.custom_inj_tariff: float | None = None                     # Injection tariff based on config formula

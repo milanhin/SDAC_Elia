@@ -126,8 +126,8 @@ class EliaSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncom
 
 
 class EcopowerPriceSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncompatibleVariableOverride]
-    """Sensor to show current elektricity price for Ecopower clients"""
-    _attr_name = "Ecopower elektricity price"                   # Name of sensor
+    """Sensor to show current electricity price for Ecopower clients"""
+    _attr_name = "Ecopower electricity price"                   # Name of sensor
     _attr_native_unit_of_measurement = f"{CURRENCY_EURO}/MWh"   # Unit of state value
     _attr_state_class = SensorStateClass.MEASUREMENT
 
@@ -159,7 +159,7 @@ class EcopowerInjectionSensor(CoordinatorEntity, SensorEntity): # pyright: ignor
 
 class CustomPriceSensor(CoordinatorEntity, SensorEntity): # pyright: ignore[reportIncompatibleVariableOverride]
     """Sensor to show current price based on config formula"""
-    _attr_name = "Custom elektricity price"                         # Name of sensor
+    _attr_name = "Custom electricity price"                         # Name of sensor
     _attr_native_unit_of_measurement = f"{CURRENCY_EURO}/MWh"       # Unit of state value
     _attr_state_class = SensorStateClass.MEASUREMENT
 
