@@ -1,4 +1,4 @@
-# SDAC_Elia
+# SDAC Elia
 Custom component for Home Assistant to fetch Belgian SDAC prices. The prices are stored in sensors that can be used for automation purposes.
 This component is built for quarterly hour prices.
 No API key is needed to fetch the data.
